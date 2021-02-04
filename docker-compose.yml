@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+
+  #App Service (PHP)
+  app:
+    build:
+      args:
+        user: pti
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: laravel-coba
+    container_name: laravel_coba
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      TZ: "Asia/Jakarta"
+    expose:
+      - 9000
+    volumes:
+      - ./:/var/www
+    # networks:
+    #     - pdam-pengaduan-api-laravel
+    depends_on:
+      - redis
+
+  #Nginx Service
+  nginx:
+    image: nginx:stable-alpine
+    container_name: pdam-pengaduan-api-laravel-nginx
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Jakarta"
+    expose:
+      - 80
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www:ro
+      - ./docker/nginx:/etc/nginx/conf.d:ro
+      - ./docker/log/nginx:/var/log/nginx
+    # networks:
+    #     - pdam
+    #     - pdam-pengaduan-api-laravel
+    depends_on:
+      - app
+
+  #Redis Service
+  redis:
+    image: redis:alpine
+    container_name: pdam-pengaduan-api-laravel-redis
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Jakarta"
+    command: ["redis-server", "--requirepass", "555hesoyam7778000"]
+    expose:
+      - 6379
+    # networks:
+    #     - pdam-pengaduan-api-laravel
+
+# networks:
+#     pdam:
+#         driver: bridge
+#     pdam-pengaduan-api-laravel:
+#         driver: bridge
